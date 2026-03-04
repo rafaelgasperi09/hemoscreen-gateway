@@ -1,0 +1,48 @@
+{
+  "name": "hemoscreen-gateway",
+  "version": "1.0.0",
+  "description": "Gateway para integración de HemoScreen con Meditech Cloud",
+  "main": "index.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "build": {
+    "appId": "com.meditech.hemoscreen.gateway",
+    "productName": "HemoScreen Gateway",
+    "win": {
+      "target": "nsis",
+      "icon": "images/hemoscreen-analyser.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "shortcutName": "HemoScreen Gateway",
+      "guid": "542181c2-81b2-4c87-a804-429baa905c09",
+      "installerIcon": "images/hemoscreen-analyser.ico",
+      "uninstallerIcon": "images/hemoscreen-analyser.ico",
+      "deleteAppDataOnUninstall": false
+    },
+    "files": [
+      "**/*",
+      "!gateway.log",
+      "!gateway.db",
+      "!*.js.map",
+      "!check_db.js"
+    ],
+    "asar": true
+  },
+  "keywords": [],
+  "author": "Meditech SaaS",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^32.2.1",
+    "electron-builder": "^24.13.3"
+  },
+  "dependencies": {
+    "axios": "^1.13.5",
+    "better-sqlite3": "^11.0.0",
+    "fast-xml-parser": "^5.4.1"
+  }
+}

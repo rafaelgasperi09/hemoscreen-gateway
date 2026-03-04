@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HemoScreen Gateway</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1>🩺 HemoScreen Gateway</h1>
+                <p class="subtitle">Medical Device TCP Bridge</p>
+            </div>
+        </header>
+
+        <!-- Status Cards -->
+        <div class="cards-grid">
+            <!-- Device Status Card -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>Estado del Dispositivo</h3>
+                    <span class="icon">📡</span>
+                </div>
+                <div class="card-body">
+                    <div class="status-indicator">
+                        <span id="deviceStatus" class="status-badge disconnected">
+                            <span class="status-dot"></span>
+                            Desconectado
+                        </span>
+                    </div>
+                    <p class="status-info">Puerto TCP: <strong id="tcpPortDisplay">5000</strong></p>
+                </div>
+            </div>
+
+            <!-- Queue Status Card -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>Cola de Mensajes</h3>
+                    <span class="icon">📦</span>
+                </div>
+                <div class="card-body">
+                    <div class="queue-count">
+                        <span id="queueCount" class="count-number">0</span>
+                        <span class="count-label">mensajes pendientes</span>
+                    </div>
+                    <button id="retryNowBtn" class="btn-retry" title="Procesar cola ahora">
+                        <span>🔄</span> Reintentar Ahora
+                    </button>
+                </div>
+            </div>
+
+            <!-- API Status Card -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>Estado SaaS</h3>
+                    <span class="icon">🌐</span>
+                </div>
+                <div class="card-body">
+                    <div class="status-indicator">
+                        <span id="saasStatus" class="status-badge disconnected">
+                            <span class="status-dot"></span>
+                            Offline
+                        </span>
+                    </div>
+                    <p id="apiEndpoint" class="status-info"></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Configuration Section -->
+        <div class="config-section">
+            <div class="card">
+                <div class="card-header">
+                    <h3>⚙️ Configuración</h3>
+                    <button id="toggleConfig" class="btn-toggle">Mostrar</button>
+                </div>
+                <div class="card-body config-body" id="configBody" style="display: none;">
+                    <form id="configForm" class="config-form">
+                        <div class="form-group">
+                            <label for="apiUrl">
+                                <span class="label-icon">🌐</span>
+                                URL de la API
+                            </label>
+                            <input type="text" id="apiUrl" placeholder="https://api.ejemplo.com" class="form-input" />
+                        </div>
+
+                        <div class="form-group">
+                            <label for="apiToken">
+                                <span class="label-icon">🔑</span>
+                                Token de API
+                            </label>
+                            <input type="password" id="apiToken" placeholder="mdt_xxxxxxxxxxxxx" class="form-input" />
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="deviceSerial">
+                                    <span class="label-icon">🔢</span>
+                                    Serial del Dispositivo
+                                </label>
+                                <input type="text" id="deviceSerial" placeholder="HS-LOCAL-01" class="form-input" />
+                            </div>
+
+                            <div class="form-group">
+                                <label for="tcpPort">
+                                    <span class="label-icon">🔌</span>
+                                    Puerto TCP
+                                </label>
+                                <input type="number" id="tcpPort" placeholder="5000" class="form-input" />
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn-primary">
+                            <span class="btn-icon">💾</span>
+                            Guardar Configuración
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Guía de Instalación Rápida -->
+        <div class="setup-guide-section">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Guía de Instalación Rápida 🚀</h3>
+                    <button id="toggleSetupGuide" class="btn-toggle">Mostrar Guía</button>
+                </div>
+                <div id="setupGuideBody" class="card-body" style="display: none;">
+                    <div class="setup-steps">
+                        <div class="step-card">
+                            <div class="step-number">1</div>
+                            <h4>Red Local</h4>
+                            <p>Asegura que el HemoScreen esté conectado a la misma red que esta PC.</p>
+                            <button id="detectLocalIpBtn" class="btn-primary btn-small">Detectar IP de esta PC</button>
+                            <div id="localIpDisplay" class="ip-info">IP: --.---.---.---</div>
+                        </div>
+
+                        <div class="step-card">
+                            <div class="step-number">2</div>
+                            <h4>Configurar Equipo</h4>
+                            <p>En el HemoScreen ve a <b>Settings > Connectivity > LIS</b> e ingresa:</p>
+                            <ul class="setup-list">
+                                <li><b>Host IP:</b> <span class="highlight-ip" id="hostIpHint">La IP detectada
+                                        arriba</span></li>
+                                <li><b>Port:</b> 5000</li>
+                                <li><b>Standard:</b> POCT1-A</li>
+                                <li><b>Protocol:</b> TCP/IP (XML)</li>
+                            </ul>
+                            <p style="margin-top: 10px;"><b>Ajustes Avanzados:</b></p>
+                            <ul class="setup-list">
+                                <li>En <b>Connectivity</b>: Activar <b>"Reenvío"</b>.</li>
+                                <li>En <b>Connectivity > Ajustes</b>: Activar <b>"Modo Continuo"</b> y <b>"Consulta de
+                                        Paciente"</b>.</li>
+                            </ul>
+                        </div>
+
+                        <div class="step-card">
+                            <div class="step-number">3</div>
+                            <h4>Probar Enlace</h4>
+                            <p>Presiona <b>"Test LIS Connection"</b> en el equipo.</p>
+                            <div id="setupStatusBadge" class="status-badge disconnected">
+                                <span class="status-dot"></span> Esperando equipo...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pending Results Management Section -->
+        <div class="queue-management-section">
+            <div class="card">
+                <div class="card-header">
+                    <h3>🛠️ Gestión de Resultados Pendientes</h3>
+                    <button id="refreshQueueBtn" class="btn-toggle">Actualizar</button>
+                </div>
+                <div class="card-body">
+                    <div id="queueListContainer" class="queue-list-container">
+                        <p class="empty-msg">No hay resultados pendientes por corregir.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Activity Log Section -->
+        <div class="log-section">
+            <div class="card">
+                <div class="card-header">
+                    <h3>📋 Registro de Actividad</h3>
+                    <button id="clearLogsBtn" class="btn-toggle">Limpiar</button>
+                </div>
+                <div class="card-body log-body">
+                    <div id="logContainer" class="log-container">
+                        <div class="log-entry info">
+                            <span class="log-time">--:--:--</span>
+                            <span class="log-message">Sistema iniciado</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>HemoScreen Gateway v1.0.0 • Sistema de integración médica</p>
+        </footer>
+    </div>
+
+    <script src="renderer.js"></script>
+</body>
+
+</html>
