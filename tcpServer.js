@@ -120,22 +120,25 @@ function startTCPServer(sendStatus, sendLog) {
 
                                             if (result.alreadySent) {
                                                 writeToPhysicalLog(`Resultado omitido (Duplicado ya enviado): Paciente ${patientId}`, 'INFO');
-                                            } else if (result.alreadyQueued) {
-                                                writeToPhysicalLog(`Resultado omitido (Ya está en cola): Paciente ${patientId}`, 'INFO');
-                                            } else if (result.success) {
-                                                writeToPhysicalLog(`Resultado procesado y enviado: Paciente ${patientId}`, 'INFO');
-                                            } else if (result.queued) {
-                                                writeToPhysicalLog(`Resultado encolado (Offline): Paciente ${patientId}`, 'INFO');
+                                                // Control de Bucle: Si recibimos el mismo duplicado, registramos el estancamiento
+                                                if (socket.lastPatientId === patientId) {
+                                                    socket.duplicateCount = (socket.duplicateCount || 0) + 1;
+                                                } else {
+                                                    socket.lastPatientId = patientId;
+                                                    socket.duplicateCount = 1;
+                                                }
+                                            } else {
+                                                socket.lastPatientId = patientId;
+                                                socket.duplicateCount = 0;
+                                                if (result.alreadyQueued) {
+                                                    writeToPhysicalLog(`Resultado omitido (Ya está en cola): Paciente ${patientId}`, 'INFO');
+                                                } else if (result.success) {
+                                                    writeToPhysicalLog(`Resultado procesado y enviado: Paciente ${patientId}`, 'INFO');
+                                                } else if (result.queued) {
+                                                    writeToPhysicalLog(`Resultado encolado (Offline): Paciente ${patientId}`, 'INFO');
+                                                }
                                             }
 
-                                            // SOLICITUD ENCADENADA: Pedimos el siguiente resultado SIEMPRE para vaciar la cola.
-                                            // Confiamos en el ACK para que el equipo avance al siguiente registro.
-                                            setTimeout(() => {
-                                                const nextReqId = controlIdCounter++;
-                                                const nextReqMsg = `<?xml version="1.0" encoding="utf-8"?><REQ.R01><HDR><HDR.control_id V="${nextReqId}"/><HDR.version_id V="${versionId}"/></HDR><REQ><REQ.request_cd V="ROBS"/></REQ></REQ.R01>`;
-                                                socket.write(nextReqMsg);
-                                                writeToPhysicalLog(`Siguiente [REQ.R01] enviada (ID: ${nextReqId})`, 'SEND');
-                                            }, 500);
                                         } catch (err) {
                                             writeToPhysicalLog(`Error procesando: ${err.message}`, 'ERROR');
                                         }
@@ -153,8 +156,20 @@ function startTCPServer(sendStatus, sendLog) {
                                 socket.write(reqMsg);
                                 writeToPhysicalLog(`Solicitud [REQ.R01] enviada (ID: ${reqId})`, 'SEND');
                             }, 500);
-                        }
-                        else if (messageType === "REQ.R01") {
+                        } else if (messageType === "EOT.R01") {
+                            // SYNC BOUNDARY: Solo pedimos el siguiente si no estamos en bucle infinito (FEDE)
+                            if ((socket.duplicateCount || 0) < 2) {
+                                setTimeout(() => {
+                                    const nextReqId = controlIdCounter++;
+                                    const nextReqMsg = `<?xml version="1.0" encoding="utf-8"?><REQ.R01><HDR><HDR.control_id V="${nextReqId}"/><HDR.version_id V="${versionId}"/></HDR><REQ><REQ.request_cd V="ROBS"/></REQ></REQ.R01>`;
+                                    socket.write(nextReqMsg);
+                                    writeToPhysicalLog(`Siguiente [REQ.R01] enviada tras EOT (ID: ${nextReqId})`, 'SEND');
+                                }, 500);
+                            } else {
+                                writeToPhysicalLog(`Bucle detectado (Paciente ${socket.lastPatientId} repetido). Deteniendo solicitudes automáticas.`, 'WARN');
+                                sendLog(`Sincronización detenida: El equipo médico repite el registro de ${socket.lastPatientId}.`, 'warning');
+                            }
+                        } else if (messageType === "REQ.R01") {
                             const requestCd = rootNode?.REQ?.["REQ.request_cd"]?.["@_V"];
                             const patientId = rootNode?.REQ?.PT?.["PT.patient_id"]?.["@_V"];
 
@@ -196,8 +211,9 @@ function startTCPServer(sendStatus, sendLog) {
 
                         if (messageType === 'HEL.R01') {
                             sendLog('Handshake completado', 'success');
+                        } else if (!["ACK.R01", "OBS.R01", "DST.R01", "REQ.R01", "EOT.R01", "END.R01", "PTL.R01"].includes(messageType)) {
+                            writeToPhysicalLog(`Mensaje no manejado recibido: ${messageType}`, 'WARN');
                         }
-
                     } catch (error) {
                         writeToPhysicalLog(`Error bloque: ${error.message}`, 'FATAL');
                     }
