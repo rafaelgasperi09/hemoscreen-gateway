@@ -132,7 +132,7 @@ function startTCPServer(sendStatus, sendLog) {
                                             // Confiamos en el ACK para que el equipo avance al siguiente registro.
                                             setTimeout(() => {
                                                 const nextReqId = controlIdCounter++;
-                                                const nextReqMsg = `<REQ.R01><HDR><HDR.control_id V="${nextReqId}"/><HDR.version_id V="${versionId}"/></HDR><REQ><REQ.request_cd V="ROBS"/></REQ></REQ.R01>`;
+                                                const nextReqMsg = `<?xml version="1.0" encoding="utf-8"?><REQ.R01><HDR><HDR.control_id V="${nextReqId}"/><HDR.version_id V="${versionId}"/></HDR><REQ><REQ.request_cd V="ROBS"/></REQ></REQ.R01>`;
                                                 socket.write(nextReqMsg);
                                                 writeToPhysicalLog(`Siguiente [REQ.R01] enviada (ID: ${nextReqId})`, 'SEND');
                                             }, 500);
@@ -146,10 +146,10 @@ function startTCPServer(sendStatus, sendLog) {
                             const pending = parseInt(rootNode?.DST?.["DST.new_observations_qty"]?.["@_V"] || "0");
                             writeToPhysicalLog(`Pendientes reportados: ${pending}`, 'INFO');
 
-                            // Simplificamos REQ: Algunos equipos antiguos o manuales prefieren sin el header de versión XML
+                            // Restauramos cabecera XML para máxima compatibilidad
                             setTimeout(() => {
                                 const reqId = controlIdCounter++;
-                                const reqMsg = `<REQ.R01><HDR><HDR.control_id V="${reqId}"/><HDR.version_id V="${versionId}"/></HDR><REQ><REQ.request_cd V="ROBS"/></REQ></REQ.R01>`;
+                                const reqMsg = `<?xml version="1.0" encoding="utf-8"?><REQ.R01><HDR><HDR.control_id V="${reqId}"/><HDR.version_id V="${versionId}"/></HDR><REQ><REQ.request_cd V="ROBS"/></REQ></REQ.R01>`;
                                 socket.write(reqMsg);
                                 writeToPhysicalLog(`Solicitud [REQ.R01] enviada (ID: ${reqId})`, 'SEND');
                             }, 500);
