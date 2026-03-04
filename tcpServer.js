@@ -127,6 +127,17 @@ function startTCPServer(sendStatus, sendLog) {
                                             } else if (result.queued) {
                                                 writeToPhysicalLog(`Resultado encolado (Offline): Paciente ${patientId}`, 'INFO');
                                             }
+
+                                            // SOLICITUD ENCADENADA: Si el resultado fue nuevo (éxito o encolado), 
+                                            // pedimos el siguiente para vaciar la cola del equipo médico.
+                                            if (result.success || result.queued) {
+                                                setTimeout(() => {
+                                                    const nextReqId = controlIdCounter++;
+                                                    const nextReqMsg = `<?xml version="1.0" encoding="utf-8"?><REQ.R01><HDR><HDR.control_id V="${nextReqId}"/><HDR.version_id V="${versionId}"/></HDR><REQ><REQ.request_cd V="ROBS"/></REQ></REQ.R01>`;
+                                                    socket.write(nextReqMsg);
+                                                    writeToPhysicalLog(`Solicitando siguiente resultado (REQ ID: ${nextReqId})`, 'SEND');
+                                                }, 500);
+                                            }
                                         } catch (err) {
                                             writeToPhysicalLog(`Error procesando: ${err.message}`, 'ERROR');
                                         }
