@@ -128,16 +128,14 @@ function startTCPServer(sendStatus, sendLog) {
                                                 writeToPhysicalLog(`Resultado encolado (Offline): Paciente ${patientId}`, 'INFO');
                                             }
 
-                                            // SOLICITUD ENCADENADA: Si el resultado fue nuevo (éxito o encolado), 
-                                            // pedimos el siguiente para vaciar la cola del equipo médico.
-                                            if (result.success || result.queued) {
-                                                setTimeout(() => {
-                                                    const nextReqId = controlIdCounter++;
-                                                    const nextReqMsg = `<?xml version="1.0" encoding="utf-8"?><REQ.R01><HDR><HDR.control_id V="${nextReqId}"/><HDR.version_id V="${versionId}"/></HDR><REQ><REQ.request_cd V="ROBS"/></REQ></REQ.R01>`;
-                                                    socket.write(nextReqMsg);
-                                                    writeToPhysicalLog(`Solicitando siguiente resultado (REQ ID: ${nextReqId})`, 'SEND');
-                                                }, 500);
-                                            }
+                                            // SOLICITUD ENCADENADA: Pedimos el siguiente resultado SIEMPRE para vaciar la cola.
+                                            // Confiamos en el ACK para que el equipo avance al siguiente registro.
+                                            setTimeout(() => {
+                                                const nextReqId = controlIdCounter++;
+                                                const nextReqMsg = `<?xml version="1.0" encoding="utf-8"?><REQ.R01><HDR><HDR.control_id V="${nextReqId}"/><HDR.version_id V="${versionId}"/></HDR><REQ><REQ.request_cd V="ROBS"/></REQ></REQ.R01>`;
+                                                socket.write(nextReqMsg);
+                                                writeToPhysicalLog(`Solicitando siguiente resultado (REQ ID: ${nextReqId})`, 'SEND');
+                                            }, 500);
                                         } catch (err) {
                                             writeToPhysicalLog(`Error procesando: ${err.message}`, 'ERROR');
                                         }
@@ -148,16 +146,16 @@ function startTCPServer(sendStatus, sendLog) {
                             const pending = parseInt(rootNode?.DST?.["DST.new_observations_qty"]?.["@_V"] || "0");
                             writeToPhysicalLog(`Pendientes reportados: ${pending}`, 'INFO');
 
-                            if (pending > 0) {
-                                // Pequeño retraso para no saturar al equipo tras el handshake o ACKs previos
-                                setTimeout(() => {
-                                    const reqId = controlIdCounter++;
-                                    const reqMsg = `<?xml version="1.0" encoding="utf-8"?><REQ.R01><HDR><HDR.control_id V="${reqId}"/><HDR.version_id V="${versionId}"/></HDR><REQ><REQ.request_cd V="ROBS"/></REQ></REQ.R01>`;
-                                    socket.write(reqMsg);
-                                    writeToPhysicalLog(`Solicitando resultados (REQ ID: ${reqId})`, 'SEND');
-                                }, 500);
-                            }
-                        } else if (messageType === "REQ.R01") {
+                            // Pedimos resultados SIEMPRE al recibir el estado, incluso si dice 0, 
+                            // para asegurar que no hay registros "viejos" pegados.
+                            setTimeout(() => {
+                                const reqId = controlIdCounter++;
+                                const reqMsg = `<?xml version="1.0" encoding="utf-8"?><REQ.R01><HDR><HDR.control_id V="${reqId}"/><HDR.version_id V="${versionId}"/></HDR><REQ><REQ.request_cd V="ROBS"/></REQ></REQ.R01>`;
+                                socket.write(reqMsg);
+                                writeToPhysicalLog(`Solicitud inicial tras estado (REQ ID: ${reqId})`, 'SEND');
+                            }, 500);
+                        }
+                        else if (messageType === "REQ.R01") {
                             const requestCd = rootNode?.REQ?.["REQ.request_cd"]?.["@_V"];
                             const patientId = rootNode?.REQ?.PT?.["PT.patient_id"]?.["@_V"];
 
