@@ -3,15 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const { XMLParser } = require("fast-xml-parser");
 const apiService = require('./apiService');
-const { getConfig, logPath } = require('./configService');
-
-const LOG_FILE = logPath;
-
-function writeToPhysicalLog(message, type = 'INFO') {
-    const timestamp = new Date().toISOString();
-    const logEntry = `[${timestamp}] [${type}] ${message}\n`;
-    fs.appendFileSync(LOG_FILE, logEntry);
-}
+const { getConfig, logPath, writeToPhysicalLog } = require('./configService');
 
 // Mapa para persistir el estado de duplicados entre conexiones por serial: { serial: { lastId, count } }
 const loopControl = {};

@@ -275,9 +275,12 @@ function addLogEntry(message, type = 'info', timestamp = null) {
     // Agregar al array de logs
     logs.push({ message, type, time });
 
-    // Mantener solo los últimos 100 logs
-    if (logs.length > 100) {
+    // Mantener solo los últimos 50 logs en pantalla para evitar bloqueos del UI
+    if (logs.length > 50) {
         logs.shift();
+        if (logContainer.firstElementChild) {
+            logContainer.removeChild(logContainer.firstElementChild);
+        }
     }
 
     // Crear elemento de log

@@ -1,5 +1,6 @@
 const axios = require('axios');
 const queueService = require('./queueService');
+const { writeToPhysicalLog } = require('./configService');
 
 async function checkSaasStatus() {
     const config = require('./configService').getConfig();
@@ -61,6 +62,9 @@ async function sendLabResults(payload) {
 
     try {
         const url = `${config.apiUrl}/api/v1/lab/hemoscreen`;
+        const payloadSummary = `Paciente: ${payload.patient_identifier}, Obs: ${payload.observations?.length || 0}`;
+        writeToPhysicalLog(`INTENTO ENVÍO SAAS: ${payloadSummary}`, 'API');
+
         console.log("📤 Enviando a:", url);
 
         const response = await axios.post(url, payload, {
@@ -71,6 +75,7 @@ async function sendLabResults(payload) {
             timeout: 10000
         });
 
+        writeToPhysicalLog(`ÉXITO ENVÍO SAAS (${response.status}): ${payloadSummary}`, 'API');
         console.log("✔ Enviado correctamente:", response.status);
 
         // 4. Marcar como enviado en la DB para evitar reenvíos futuros
@@ -82,6 +87,7 @@ async function sendLabResults(payload) {
         const statusCode = error.response?.status || 'N/A';
         const errorData = error.response?.data ? JSON.stringify(error.response.data) : error.message;
 
+        writeToPhysicalLog(`ERROR ENVÍO SAAS (${statusCode}): ${errorData}`, 'ERROR');
         console.log("❌ Error enviando - HTTP", statusCode);
 
         if (statusCode === 404) {

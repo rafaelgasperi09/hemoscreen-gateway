@@ -1,9 +1,18 @@
 const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 const os = require('os');
-const { saveConfig } = require('./configService');
-const { startTCPServer } = require('./tcpServer');
+const { saveConfig, writeToPhysicalLog } = require('./configService');
+const { startTCPServer, resetLoopControl } = require('./tcpServer');
 const { startRetryWorker } = require('./retryWorker');
+
+// Manejo de errores globales para el log físico
+process.on('uncaughtException', (error) => {
+    writeToPhysicalLog(`EXCEPCIÓN NO CONTROLADA: ${error.stack}`, 'CRITICAL');
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+    writeToPhysicalLog(`PROMESA NO MANEJADA: ${reason}`, 'CRITICAL');
+});
 
 let mainWindow;
 
@@ -124,8 +133,11 @@ ipcMain.handle('clear-history', async () => {
     const queueService = require('./queueService');
     try {
         await queueService.clearHistory();
+        resetLoopControl(); // Limpiar memoria de bucles
+        writeToPhysicalLog('Historial local y control de bucles reiniciado por el usuario', 'INFO');
         return { success: true };
     } catch (err) {
+        writeToPhysicalLog(`ERROR REINICIANDO HISTORIAL: ${err.message}`, 'ERROR');
         return { success: false, error: err.message };
     }
 });

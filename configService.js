@@ -44,9 +44,20 @@ function saveConfig(config) {
     fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
 }
 
+function writeToPhysicalLog(message, type = 'INFO') {
+    try {
+        const timestamp = new Date().toISOString();
+        const logEntry = `[${timestamp}] [${type}] ${message}\n`;
+        fs.appendFileSync(logPath, logEntry);
+    } catch (err) {
+        console.error("No se pudo escribir en el log físico:", err);
+    }
+}
+
 module.exports = {
     getConfig,
     saveConfig,
+    writeToPhysicalLog,
     configPath,
     dbPath,
     logPath
