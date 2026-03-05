@@ -694,3 +694,29 @@ body {
     justify-content: center;
     padding: 0.75rem;
 }
+
+.btn-danger-outline {
+    background: transparent;
+    border: 1px solid #ef4444;
+    color: #ef4444;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.2s;
+    width: 100%;
+}
+
+.btn-danger-outline:hover {
+    background: #ef4444;
+    color: white;
+}
+
+.btn-danger-outline:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}

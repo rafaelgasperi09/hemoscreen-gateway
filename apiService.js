@@ -44,6 +44,9 @@ async function sendLabResults(payload) {
         if (queueResult.status === 'sent') {
             console.log("✔ Registro omitido: Ya fue enviado previamente al SaaS.");
             return { success: true, alreadySent: true };
+        } else if (queueResult.status === 'failed') {
+            console.log("❌ Registro omitido: Ya falló anteriormente (404 u otro error permanente).");
+            return { success: false, alreadyFailed: true };
         } else {
             console.log("⏳ Registro omitido: Ya existe en cola de pendientes.");
             return { queued: true, alreadyQueued: true };
@@ -80,10 +83,16 @@ async function sendLabResults(payload) {
         const errorData = error.response?.data ? JSON.stringify(error.response.data) : error.message;
 
         console.log("❌ Error enviando - HTTP", statusCode);
-        console.log("❌ Guardado en cola para reintento automático");
 
-        await queueService.markAsFailed(queueResult.id, `HTTP ${statusCode}: ${errorData}`);
-        return { queued: true };
+        if (statusCode === 404) {
+            console.log("🛑 Error permanente (404): Paciente no encontrado o URL inválida. No se reintentará.");
+            await queueService.markAsFailed(queueResult.id, `PERMANENT HTTP 404: ${errorData}`, true);
+            return { success: false, error: 'permanent_failure' };
+        } else {
+            console.log("❌ Guardado en cola para reintento automático");
+            await queueService.markAsFailed(queueResult.id, `HTTP ${statusCode}: ${errorData}`);
+            return { queued: true };
+        }
     }
 }
 

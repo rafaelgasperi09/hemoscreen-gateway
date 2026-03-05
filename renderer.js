@@ -12,6 +12,7 @@ const logContainer = document.getElementById('logContainer');
 const clearLogsBtn = document.getElementById('clearLogsBtn');
 const refreshQueueBtn = document.getElementById('refreshQueueBtn');
 const queueListContainer = document.getElementById('queueListContainer');
+const resetSyncBtn = document.getElementById('resetSyncBtn');
 
 // Elementos de la Guía de Instalación
 const toggleSetupGuideBtn = document.getElementById('toggleSetupGuide');
@@ -148,6 +149,35 @@ retryNowBtn.addEventListener('click', async () => {
         retryNowBtn.innerHTML = '<span>🔄</span> Reintentar Ahora';
     }
 });
+
+// Botón para reiniciar historial
+if (resetSyncBtn) {
+    resetSyncBtn.addEventListener('click', async () => {
+        if (!confirm('¿Estás seguro de reiniciar el historial? El equipo médico volverá a enviar todos los resultados archivados desde cero.')) {
+            return;
+        }
+
+        resetSyncBtn.disabled = true;
+        try {
+            const result = await window.electronAPI.clearHistory();
+            if (result.success) {
+                showNotification('✅ Historial local reiniciado');
+                addLogEntry('Historial de sincronización reiniciado por el usuario', 'warning');
+
+                // Actualizar UI
+                const count = await fetchQueueCount();
+                queueCountElement.textContent = count;
+                refreshQueueList();
+            } else {
+                showNotification('❌ Error al reiniciar historial', 'error');
+            }
+        } catch (err) {
+            showNotification('❌ Error de comunicación', 'error');
+        } finally {
+            resetSyncBtn.disabled = false;
+        }
+    });
+}
 
 // Botón para limpiar logs
 clearLogsBtn.addEventListener('click', () => {

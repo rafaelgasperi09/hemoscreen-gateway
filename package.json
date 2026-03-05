@@ -4,7 +4,9 @@
   "description": "Gateway para integración de HemoScreen con Meditech Cloud",
   "main": "index.js",
   "scripts": {
-    "start": "electron .",
+    "start": "electron . --no-sandbox",
+    "prepare-env": "npm install && npm run rebuild-native",
+    "rebuild-native": "npx @electron/rebuild -f -w better-sqlite3",
     "dist": "electron-builder --win",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -37,6 +39,7 @@
   "author": "Meditech SaaS",
   "license": "ISC",
   "devDependencies": {
+    "@electron/rebuild": "^3.6.0",
     "electron": "^32.2.1",
     "electron-builder": "^24.13.3"
   },

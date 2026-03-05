@@ -65,17 +65,23 @@ async function markAsSent(id) {
     db.prepare(`UPDATE outbound_queue SET status = 'sent' WHERE id = ?`).run(id);
 }
 
-async function markAsFailed(id, error) {
-    db.prepare(`UPDATE outbound_queue SET attempts = attempts + 1, last_error = ? WHERE id = ?`).run(error, id);
+async function markAsFailed(id, error, isPermanent = false) {
+    if (isPermanent) {
+        db.prepare(`UPDATE outbound_queue SET attempts = attempts + 1, last_error = ?, status = 'failed' WHERE id = ?`).run(error, id);
+    } else {
+        db.prepare(`UPDATE outbound_queue SET attempts = attempts + 1, last_error = ? WHERE id = ?`).run(error, id);
+    }
 }
 
 async function countPending() {
-    const row = db.prepare(`SELECT COUNT(*) as total FROM outbound_queue WHERE status = 'pending'`).get();
+    // Incluir fallidos para que el usuario sepa que hay algo que corregir
+    const row = db.prepare(`SELECT COUNT(*) as total FROM outbound_queue WHERE status IN ('pending', 'failed')`).get();
     return row ? row.total : 0;
 }
 
 async function getAllPending() {
-    return db.prepare(`SELECT * FROM outbound_queue WHERE status = 'pending' ORDER BY created_at DESC`).all();
+    // Incluir fallidos para permitir edición de ID
+    return db.prepare(`SELECT * FROM outbound_queue WHERE status IN ('pending', 'failed') ORDER BY created_at DESC`).all();
 }
 
 async function updatePatientId(id, newPatientId) {
@@ -85,9 +91,14 @@ async function updatePatientId(id, newPatientId) {
     let payload = JSON.parse(row.payload);
     payload.patient_identifier = newPatientId;
 
-    db.prepare(`UPDATE outbound_queue SET payload = ?, attempts = 0, last_error = NULL WHERE id = ?`)
+    db.prepare(`UPDATE outbound_queue SET payload = ?, attempts = 0, last_error = NULL, status = 'pending' WHERE id = ?`)
         .run(JSON.stringify(payload), id);
 
+    return true;
+}
+
+async function clearHistory() {
+    db.prepare(`DELETE FROM outbound_queue`).run();
     return true;
 }
 
@@ -98,5 +109,6 @@ module.exports = {
     markAsFailed,
     countPending,
     getAllPending,
-    updatePatientId
+    updatePatientId,
+    clearHistory
 };

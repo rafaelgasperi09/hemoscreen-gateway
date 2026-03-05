@@ -24,26 +24,26 @@ if (!gotTheLock) {
     app.whenReady().then(() => {
         createWindow();
 
-        // Esperar a que la ventana esté lista antes de iniciar servicios
+        console.log('✅ App lista, iniciando servicios de fondo...');
+        startTCPServer(sendStatus, sendLog);
+        startRetryWorker(sendStatus, sendLog);
+
+        // Verificaciones del SaaS
+        setInterval(async () => {
+            const { checkSaasStatus } = require('./apiService');
+            const status = await checkSaasStatus();
+            sendStatus('saas-status', status);
+        }, 30000);
+
+        setTimeout(async () => {
+            const { checkSaasStatus } = require('./apiService');
+            const status = await checkSaasStatus();
+            sendStatus('saas-status', status);
+        }, 2000);
+
         mainWindow.webContents.on('did-finish-load', () => {
-            console.log('✅ Ventana cargada, iniciando servicios...');
             sendLog('Sistema iniciado correctamente', 'success');
-            startTCPServer(sendStatus, sendLog);
-            startRetryWorker(sendStatus, sendLog);
             sendLog('Servicios TCP y Retry Worker activos', 'info');
-
-            // Verificaciones del SaaS
-            setInterval(async () => {
-                const { checkSaasStatus } = require('./apiService');
-                const status = await checkSaasStatus();
-                sendStatus('saas-status', status);
-            }, 30000);
-
-            setTimeout(async () => {
-                const { checkSaasStatus } = require('./apiService');
-                const status = await checkSaasStatus();
-                sendStatus('saas-status', status);
-            }, 2000);
         });
     });
 }
@@ -116,6 +116,16 @@ ipcMain.handle('update-patient-id', async (event, { id, newPatientId }) => {
         return { success: true };
     } catch (err) {
         sendLog(`Falla al corregir ID: ${err.message}`, 'error');
+        return { success: false, error: err.message };
+    }
+});
+
+ipcMain.handle('clear-history', async () => {
+    const queueService = require('./queueService');
+    try {
+        await queueService.clearHistory();
+        return { success: true };
+    } catch (err) {
         return { success: false, error: err.message };
     }
 });

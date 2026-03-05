@@ -8,6 +8,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     retryQueueNow: () => ipcRenderer.invoke('retry-queue-now'),
     getFullQueue: () => ipcRenderer.invoke('get-full-queue'),
     updatePatientId: (id, newPatientId) => ipcRenderer.invoke('update-patient-id', { id, newPatientId }),
+    clearHistory: () => ipcRenderer.invoke('clear-history'),
     getLocalIp: () => ipcRenderer.invoke('get-local-ip'),
     onDeviceStatus: (callback) => ipcRenderer.on('device-status', (_, data) => callback(data)),
     onQueueUpdate: (callback) => ipcRenderer.on('queue-update', () => callback()),

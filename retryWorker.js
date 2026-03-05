@@ -2,8 +2,8 @@ const axios = require('axios');
 const queueService = require('./queueService');
 const { getConfig } = require('./configService');
 
-let sendStatus = () => {};
-let sendLog = () => {};
+let sendStatus = () => { };
+let sendLog = () => { };
 
 async function processQueue() {
 
@@ -14,14 +14,21 @@ async function processQueue() {
 
     sendLog(`Procesando ${items.length} mensaje(s) en cola`, 'info');
 
+    const MAX_ATTEMPTS = 10;
+
     for (const item of items) {
+        if (item.attempts >= MAX_ATTEMPTS) {
+            console.log(`🛑 Límite de reintentos alcanzado para ID ${item.id}. Marcando como fallido.`);
+            await queueService.markAsFailed(item.id, `STOPPED: Máximo de ${MAX_ATTEMPTS} reintentos alcanzado.`, true);
+            continue;
+        }
 
         try {
 
             const payload = JSON.parse(item.payload);
             const url = `${config.apiUrl}/api/v1/lab/hemoscreen`;
 
-            console.log(`🔄 Reintentando ID ${item.id} a ${url}`);
+            console.log(`🔄 Reintentando ID ${item.id} (${item.attempts}/${MAX_ATTEMPTS}) a ${url}`);
             sendLog(`Reintentando envío a ${url}`, 'info');
 
             const response = await axios.post(url, payload, {
@@ -34,7 +41,7 @@ async function processQueue() {
 
             console.log(`✔ Reintento exitoso ID ${item.id}`, response.status);
             sendLog(`Reintento exitoso para mensaje ID ${item.id}`, 'success');
-            queueService.markAsSent(item.id);
+            await queueService.markAsSent(item.id);
             sendStatus('queue-update');
 
         } catch (error) {
@@ -45,8 +52,14 @@ async function processQueue() {
             console.log(`❌ Reintento falló ID ${item.id} - Status: ${statusCode}`);
             console.log(`Error details:`, errorData);
 
-            sendLog(`Reintento falló ID ${item.id} - HTTP ${statusCode}: ${errorData}`, 'error');
-            queueService.markAsFailed(item.id, `HTTP ${statusCode}: ${errorData}`);
+            if (statusCode === 404) {
+                console.log(`🛑 Error permanente (404) detectado en reintento. Descartando ID ${item.id}`);
+                await queueService.markAsFailed(item.id, `PERMANENT HTTP 404: ${errorData}`, true);
+            } else {
+                await queueService.markAsFailed(item.id, `HTTP ${statusCode}: ${errorData}`);
+            }
+
+            sendLog(`Reintento falló ID ${item.id} - HTTP ${statusCode}`, 'error');
             sendStatus('queue-update');
         }
     }
@@ -54,7 +67,7 @@ async function processQueue() {
 
 function startRetryWorker(statusCallback, logCallback) {
     sendStatus = statusCallback;
-    sendLog = logCallback || (() => {});
+    sendLog = logCallback || (() => { });
     setInterval(processQueue, 15000); // cada 15 segundos
 }
 
