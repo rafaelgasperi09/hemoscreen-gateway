@@ -410,9 +410,14 @@ async function refreshQueueList() {
                         <span class="error-text" title="${item.last_error || ''}">${item.last_error || 'Pendiente'}</span>
                     </td>
                     <td id="action-cell-${item.id}">
-                        <button class="btn-small btn-edit" onclick="startEdit(${item.id}, '${payload.patient_identifier}')">
-                            Editar ID
-                        </button>
+                        <div class="action-buttons">
+                            <button class="btn-small btn-edit" onclick="startEdit(${item.id}, '${payload.patient_identifier}')">
+                                Editar ID
+                            </button>
+                            <button class="btn-small btn-retry" onclick="retryItem(${item.id})">
+                                Reintentar
+                            </button>
+                        </div>
                     </td>
                 </tr>
             `;
@@ -463,6 +468,20 @@ window.saveEdit = async function (id) {
         }
     } catch (err) {
         showNotification('❌ Error al guardar', 'error');
+    }
+};
+
+window.retryItem = async function (id) {
+    try {
+        const result = await window.electronAPI.retryItem(id);
+        if (result.success) {
+            showNotification('✅ Reintento programado');
+            refreshQueueList();
+        } else {
+            showNotification('❌ Error: ' + result.error, 'error');
+        }
+    } catch (err) {
+        showNotification('❌ Error al reintentar', 'error');
     }
 };
 

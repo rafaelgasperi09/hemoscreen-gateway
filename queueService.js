@@ -103,6 +103,11 @@ async function clearHistory() {
     return true;
 }
 
+async function resetItemStatus(id) {
+    db.prepare(`UPDATE outbound_queue SET status = 'pending', attempts = 0, last_error = NULL WHERE id = ?`).run(id);
+    return true;
+}
+
 module.exports = {
     addToQueue,
     getPending,
@@ -111,5 +116,6 @@ module.exports = {
     countPending,
     getAllPending,
     updatePatientId,
-    clearHistory
+    clearHistory,
+    resetItemStatus
 };

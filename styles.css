@@ -716,6 +716,21 @@ body {
     color: white;
 }
 
+.action-buttons {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+}
+
+.btn-retry {
+    background: #3b82f6;
+    color: white;
+}
+
+.btn-retry:hover {
+    background: #2563eb;
+}
+
 .btn-danger-outline:disabled {
     opacity: 0.5;
     cursor: not-allowed;

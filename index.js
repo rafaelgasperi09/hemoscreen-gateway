@@ -129,6 +129,19 @@ ipcMain.handle('update-patient-id', async (event, { id, newPatientId }) => {
     }
 });
 
+ipcMain.handle('retry-item', async (event, id) => {
+    const queueService = require('./queueService');
+    const { processQueue } = require('./retryWorker');
+    try {
+        await queueService.resetItemStatus(id);
+        // Disparar procesamiento inmediatamente tras resetear
+        setTimeout(() => processQueue(), 500);
+        return { success: true };
+    } catch (err) {
+        return { success: false, error: err.message };
+    }
+});
+
 ipcMain.handle('clear-history', async () => {
     const queueService = require('./queueService');
     try {
