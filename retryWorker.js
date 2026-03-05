@@ -27,9 +27,10 @@ async function processQueue() {
 
             const payload = JSON.parse(item.payload);
             const url = `${config.apiUrl}/api/v1/lab/hemoscreen`;
+            const patientId = payload.patient_identifier || 'N/A';
 
-            console.log(`🔄 Reintentando ID ${item.id} (${item.attempts}/${MAX_ATTEMPTS}) a ${url}`);
-            sendLog(`Reintentando envío a ${url}`, 'info');
+            console.log(`🔄 Reintentando ID ${item.id} (Paciente: ${patientId}) [${item.attempts}/${MAX_ATTEMPTS}] a ${url}`);
+            sendLog(`Reintentando envío: ${patientId} a ${url}`, 'info');
 
             const response = await axios.post(url, payload, {
                 headers: {
@@ -62,6 +63,9 @@ async function processQueue() {
             sendLog(`Reintento falló ID ${item.id} - HTTP ${statusCode}`, 'error');
             sendStatus('queue-update');
         }
+
+        // Respirar un poco entre items para evitar bloqueos de base de datos y UI
+        await new Promise(resolve => setTimeout(resolve, 500));
     }
 }
 

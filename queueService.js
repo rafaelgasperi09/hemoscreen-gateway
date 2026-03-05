@@ -1,7 +1,8 @@
 const Database = require('better-sqlite3');
 const { dbPath } = require('./configService');
 
-const db = new Database(dbPath);
+const db = new Database(dbPath, { timeout: 5000 });
+db.pragma('journal_mode = WAL');
 
 // Inicializar tabla si no existe
 // Añadimos control_id para evitar duplicados de la misma sesión de sincronización
