@@ -31,6 +31,9 @@ async function processQueue() {
 
             console.log(`🔄 Reintentando ID ${item.id} (Paciente: ${patientId}) [${item.attempts}/${MAX_ATTEMPTS}] a ${url}`);
             sendLog(`Reintentando envío: ${patientId} a ${url}`, 'info');
+            const { writeToPhysicalLog } = require('./configService');
+            writeToPhysicalLog(`INTENTO REINTENTO SAAS (ID: ${item.id}): Paciente ${patientId}`, 'API');
+            writeToPhysicalLog(`JSON REINTENTO: ${item.payload}`, 'DATA');
 
             const response = await axios.post(url, payload, {
                 headers: {

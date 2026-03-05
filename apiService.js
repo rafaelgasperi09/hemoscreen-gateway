@@ -64,6 +64,7 @@ async function sendLabResults(payload) {
         const url = `${config.apiUrl}/api/v1/lab/hemoscreen`;
         const payloadSummary = `Paciente: ${payload.patient_identifier}, Obs: ${payload.observations?.length || 0}`;
         writeToPhysicalLog(`INTENTO ENVÍO SAAS: ${payloadSummary}`, 'API');
+        writeToPhysicalLog(`JSON ENVIADO: ${JSON.stringify(payload)}`, 'DATA');
 
         console.log("📤 Enviando a:", url);
 
