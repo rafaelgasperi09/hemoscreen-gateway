@@ -26,7 +26,8 @@ async function processQueue() {
         try {
 
             const payload = JSON.parse(item.payload);
-            const url = `${config.apiUrl}/api/v1/lab/hemoscreen`;
+            const endpointStyle = config.endpointType || 'hemoscreen';
+            const url = `${config.apiUrl}/api/v1/lab/${endpointStyle}`;
             const patientId = payload.patient_identifier || 'N/A';
 
             console.log(`🔄 Reintentando ID ${item.id} (Paciente: ${patientId}) [${item.attempts}/${MAX_ATTEMPTS}] a ${url}`);

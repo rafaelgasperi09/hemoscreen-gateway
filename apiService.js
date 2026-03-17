@@ -61,7 +61,8 @@ async function sendLabResults(payload) {
     }
 
     try {
-        const url = `${config.apiUrl}/api/v1/lab/hemoscreen`;
+        const endpointStyle = config.endpointType || 'hemoscreen';
+        const url = `${config.apiUrl}/api/v1/lab/${endpointStyle}`;
         const payloadSummary = `Paciente: ${payload.patient_identifier}, Obs: ${payload.observations?.length || 0}`;
         writeToPhysicalLog(`INTENTO ENVÍO SAAS: ${payloadSummary}`, 'API');
         writeToPhysicalLog(`JSON ENVIADO: ${JSON.stringify(payload)}`, 'DATA');
@@ -111,7 +112,8 @@ async function getServiceRequest(hemoId) {
     }
 
     try {
-        const url = `${config.apiUrl}/api/v1/lab/hemoscreen/service-request/${hemoId}`;
+        const endpointStyle = config.endpointType || 'hemoscreen';
+        const url = `${config.apiUrl}/api/v1/lab/${endpointStyle}/service-request/${hemoId}`;
         console.log("🔍 Consultando SRID a:", url);
 
         const response = await axios.get(url, {

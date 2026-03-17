@@ -28,15 +28,19 @@ function getConfig() {
             apiUrl: '',
             apiToken: '',
             tcpPort: 5000,
-            deviceSerial: ''
+            deviceSerial: '',
+            endpointType: 'hemoscreen'
         };
     }
 
     try {
-        return JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+        const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+        // Asegurar que exista el endpointType por defecto si es una config vieja
+        if (!config.endpointType) config.endpointType = 'hemoscreen';
+        return config;
     } catch (err) {
         console.error("Error leyendo config:", err);
-        return { apiUrl: '', apiToken: '', tcpPort: 5000, deviceSerial: '' };
+        return { apiUrl: '', apiToken: '', tcpPort: 5000, deviceSerial: '', endpointType: 'hemoscreen' };
     }
 }
 

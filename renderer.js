@@ -190,6 +190,7 @@ function saveConfig() {
     const config = {
         apiUrl: document.getElementById('apiUrl').value,
         apiToken: document.getElementById('apiToken').value,
+        endpointType: document.getElementById('apiEndpointType').value || 'hemoscreen',
         deviceSerial: document.getElementById('deviceSerial').value,
         tcpPort: parseInt(document.getElementById('tcpPort').value) || 5000
     };
@@ -217,6 +218,9 @@ async function loadCurrentConfig() {
 
         document.getElementById('apiUrl').value = config.apiUrl || '';
         document.getElementById('apiToken').value = config.apiToken || '';
+        if (document.getElementById('apiEndpointType')) {
+            document.getElementById('apiEndpointType').value = config.endpointType || 'hemoscreen';
+        }
         document.getElementById('deviceSerial').value = config.deviceSerial || '';
         document.getElementById('tcpPort').value = config.tcpPort || 5000;
 
